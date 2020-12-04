@@ -118,12 +118,12 @@ def collect_result(result):
 qkeybase = '102231'
 qkeyx,qkeyy,qkeylvl=bingtile.QuadKeyToTileXY(qkeybase)
 qkeystoprocess=[]
-tilesx=3
-tilesy=5
-padleft=1
-padtop=1
-padright=1
-padbottom=1
+tilesx=1
+tilesy=1
+padleft=0
+padtop=0
+padright=0
+padbottom=0
 idx=(-1)*padleft
 idy=(-1)*padtop
 while idy<tilesy+padbottom:
@@ -134,7 +134,7 @@ while idy<tilesy+padbottom:
     idy+=1
 
 minlevel = 6
-maxlevel = 11
+maxlevel = 6
 level = maxlevel
 if __name__ == '__main__':
     while level >= minlevel:

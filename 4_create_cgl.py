@@ -1,13 +1,13 @@
 import os
 import glob
-import cglcompress as cglc
+import cgl_generate as cglc
 import bingtile
 
 qkeybase = '102231'
 qkeyx,qkeyy,qkeylvl=bingtile.QuadKeyToTileXY(qkeybase)
 qkeystoprocess=[]
-tilesx=3
-tilesy=5
+tilesx=1
+tilesy=1
 padleft=0
 padtop=0
 padright=0

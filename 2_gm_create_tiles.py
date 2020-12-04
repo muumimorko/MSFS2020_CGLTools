@@ -10,11 +10,11 @@ for file in files:
     os.system(file)
 
 # Monitor tile creation process
-tilecount = 143360
+tilecount = 4
 deltas = []
 previous = 0
 while True:
-    count = len(glob.glob("Tile/12/*.rw"))
+    count = len(glob.glob("Tile/7/*.rw"))
     if previous == 0:
         previous = count
     else:

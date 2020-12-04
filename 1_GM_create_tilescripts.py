@@ -18,16 +18,16 @@ import misc
 qkeybase = '102231'
 qkeyx,qkeyy,qkeylvl=bingtile.QuadKeyToTileXY(qkeybase)
 qkeystoprocess=[]
-tilesx=3
-tilesy=5
-padleft=1
-padtop=1
-padright=1
-padbottom=1
+tilesx=1
+tilesy=1
+padleft=0
+padtop=0
+padright=0
+padbottom=0
 idx=(-1)*padleft
 idy=(-1)*padtop
 while idy<tilesy+padbottom:
-    while tilesx+padright<4:
+    while idx<tilesx+padright:
         qkeystoprocess.append(bingtile.TileXYToQuadKey(qkeyx+idx,qkeyy+idy,qkeylvl))
         idx+=1
     idx=-1
@@ -42,8 +42,8 @@ fileindex = 0
 maxperfile = 9000
 totalcount = 0
 for qket in qkeystoprocess:
-    minlevel = 12
-    maxlevel = 12
+    minlevel = 7
+    maxlevel = 7
     qkey = qket
     while len(qkey) < minlevel:
         qkey += '0'
@@ -54,7 +54,6 @@ for qket in qkeystoprocess:
             if itr == 0:
                 script = open("tilescript_"+str(fileindex).rjust(3, '0')+".gms", 'w')
                 script.write('GLOBAL_MAPPER_SCRIPT VERSION=1.00\n')
-                script.write('ENABLE_PROGRESS=YES\n')
                 script.write(
                     'IMPORT FILENAME=C:\\karttadata\\eudem\\eudem25.gmc ELEV_UNITS=METERS ELEV_SCALE=4 VOID_ELEV=0.0\n')
                 script.write(
@@ -79,7 +78,7 @@ for qket in qkeystoprocess:
             east = lr[1]
             south = lr[0]
             script.write('EXPORT_ELEVATION TYPE=BIL USE_UNSIGNED=NO BYTES_PER_SAMPLE=2 SPATIAL_RES='+str(pw)+','+str(ph)+' FORCE_SQUARE_PIXELS=NO ELEV_UNITS=METERS SAMPLING_METHOD=LAYER LAT_LON_BOUNDS=' +
-                        str(west)+','+str(south)+','+str(east)+','+str(north)+' FILENAME="C:\\Users\\teemu\\source\\repos\MSFS_CGLTools\\'+'Tile\\'+str(level)+"\\"+"dem_"+qkey+'.rw"\n')
+                        str(west)+','+str(south)+','+str(east)+','+str(north)+' FILENAME="'+os.getcwd()+'\\Tile\\'+str(level)+"\\"+"dem_"+qkey+'.rw"\n')
             qkey = misc.QuadKeyIncrement(qkey)
             itr += 1
             if itr == maxperfile-1:
