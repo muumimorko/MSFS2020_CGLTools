@@ -1,0 +1,15 @@
+{
+  "dependencies": [],
+  "content_type": "SCENERY",
+  "title": "ExampleDEM",
+  "manufacturer": "",
+  "creator": "creator",
+  "package_version": "0.1.0",
+  "minimum_game_version": "1.11.6",
+  "release_notes": {
+    "neutral": {
+      "LastUpdate": "Hullo",
+      "OlderHistory": "These can be seen in package manager"
+    }
+  }
+}
