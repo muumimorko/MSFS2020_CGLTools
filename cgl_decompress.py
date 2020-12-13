@@ -180,7 +180,7 @@ def decompress(src, baseqkey, dst):
         print("datastart: "+f'{datastart:08}' + "end: "+f'{dataend:08}')
         fullqkey = qkeybase+qkeys[i]
         outfile = open(dst+"dem_"+fullqkey+".rw", "wb")
-        outfile.write(lzma.decompress(
+        outsize=outfile.write(lzma.decompress(
             inarr[datastart:dataend], lzma.FORMAT_RAW, None, my_filters)[0:])
         outfile.close()
         # write hdr file
@@ -203,9 +203,14 @@ def decompress(src, baseqkey, dst):
         outfile.write("NROWS          257\n")
         outfile.write("NCOLS          257\n")
         outfile.write("NBANDS         1\n")
-        outfile.write("NBITS          16\n")
-        outfile.write("BANDROWBYTES   514\n")
-        outfile.write("TOTALROWBYTES  514\n")
+        if outsize==66056:
+            outfile.write("NBITS          8\n")
+            outfile.write("BANDROWBYTES   257\n")
+            outfile.write("TOTALROWBYTES  257\n")
+        elif outsize==132105:
+            outfile.write("NBITS          16\n")
+            outfile.write("BANDROWBYTES   514\n")
+            outfile.write("TOTALROWBYTES  514\n")
         outfile.write("BANDGAPBYTES   0\n")
         outfile.write("NODATA         -9999\n")
         outfile.write("SKIPBYTES      7\n")
