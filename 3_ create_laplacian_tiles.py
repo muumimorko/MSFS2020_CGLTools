@@ -41,7 +41,8 @@ def createLevelTileAndSubDeltas(qkey):
     if found:
         down = np.zeros((512, 512), np.int16)
         # down = cv2.pyrDown(nparrupper)
-        blur = cv2.GaussianBlur(nparrupper, (7, 7), 32)
+        #blur = cv2.GaussianBlur(nparrupper, (5, 5),0)
+        blur = cv2.GaussianBlur(nparrupper, (9, 9), 32)
         itrr = 0
         itrc = 0
         while itrc < 512:
@@ -65,10 +66,10 @@ def createLevelTileAndSubDeltas(qkey):
         delta2[0:257, 0:257] = delta[512:512+257, 256:256+257]
         delta3 = np.zeros((257, 257), np.int16)
         delta3[0:257, 0:257] = delta[512:512+257, 512:512+257]
-        saveDelta("Delta", qkey+str(0), delta0, 1/4, 0)
-        saveDelta("Delta", qkey+str(1), delta1, 1/4, 0)
-        saveDelta("Delta", qkey+str(2), delta2, 1/4, 0)
-        saveDelta("Delta", qkey+str(3), delta3, 1/4, 0)
+        saveDelta("Delta", qkey+str(0), delta0, 1/1, 0)
+        saveDelta("Delta", qkey+str(1), delta1, 1/1, 0)
+        saveDelta("Delta", qkey+str(2), delta2, 1/1, 0)
+        saveDelta("Delta", qkey+str(3), delta3, 1/1, 0)
 
 
 def saveTile(type, qkey, data):
@@ -96,7 +97,7 @@ def to8bit(qkey):
     basetile0 = infile.read()
     infile.close()
     nparr = np.frombuffer(basetile0, np.int16).reshape((257, 257))
-    saveDelta("Tile", qkey, nparr, 1/4, -20)
+    saveDelta("Tile", qkey, nparr, 1/1, -47)
 
 
 def chunks(lst, n):
@@ -115,7 +116,9 @@ def collect_result(result):
     return
 
 
-qkeybase = '102231'
+px,py=bingtile.LatLongToPixelXY(51.9593211025, -3.0832820611,6)
+tx,ty=bingtile.PixelXYToTileXY(px,py)
+qkeybase = bingtile.TileXYToQuadKey(tx,ty,6)
 qkeyx,qkeyy,qkeylvl=bingtile.QuadKeyToTileXY(qkeybase)
 qkeystoprocess=[]
 tilesx=1
@@ -130,11 +133,11 @@ while idy<tilesy+padbottom:
     while idx<tilesx+padright:
         qkeystoprocess.append(bingtile.TileXYToQuadKey(qkeyx+idx,qkeyy+idy,qkeylvl))
         idx+=1
-    idx=-1
+    idx=padleft
     idy+=1
 
 minlevel = 6
-maxlevel = 6
+maxlevel = 11
 level = maxlevel
 if __name__ == '__main__':
     while level >= minlevel:
@@ -151,7 +154,7 @@ if __name__ == '__main__':
             if parts == 0:
                 parts = 1
             subchunks = chunks(subqkeys, parts)
-            pool = mp.Pool(int(mp.cpu_count()))
+            pool = mp.Pool(int(mp.cpu_count()/1))
             for idx, chunk in enumerate(subchunks):
                 pool.apply_async(createLevelTileAndSubDeltasChunk, args=(
                     idx, chunk), callback=collect_result)

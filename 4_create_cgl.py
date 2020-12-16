@@ -3,7 +3,9 @@ import glob
 import cgl_generate as cglc
 import bingtile
 
-qkeybase = '102231'
+px,py=bingtile.LatLongToPixelXY(51.9593211025, -3.0832820611,6)
+tx,ty=bingtile.PixelXYToTileXY(px,py)
+qkeybase = bingtile.TileXYToQuadKey(tx,ty,6)
 qkeyx,qkeyy,qkeylvl=bingtile.QuadKeyToTileXY(qkeybase)
 qkeystoprocess=[]
 tilesx=1
@@ -14,11 +16,11 @@ padright=0
 padbottom=0
 idx=(-1)*padleft
 idy=(-1)*padtop
-while idy<tilesy+padbottom:
+while idy<tilesy+padbottom: 
     while idx<tilesx+padright:
         qkeystoprocess.append(bingtile.TileXYToQuadKey(qkeyx+idx,qkeyy+idy,qkeylvl))
         idx+=1
-    idx=-1
+    idx=(-1)*padleft
     idy+=1
     
 for qkey in qkeystoprocess:

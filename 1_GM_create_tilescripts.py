@@ -15,7 +15,9 @@ import misc
 # Make a list of quadkeys, base quadkey is topleftmost tile to be reconstructed
 # padding fills additional tiles around target qkeys,
 # if not padded, edges will go to zero elevation
-qkeybase = '102231'
+px,py=bingtile.LatLongToPixelXY(51.9593211025, -3.0832820611,6)
+tx,ty=bingtile.PixelXYToTileXY(px,py)
+qkeybase = bingtile.TileXYToQuadKey(tx,ty,6)
 qkeyx,qkeyy,qkeylvl=bingtile.QuadKeyToTileXY(qkeybase)
 qkeystoprocess=[]
 tilesx=1
@@ -30,7 +32,7 @@ while idy<tilesy+padbottom:
     while idx<tilesx+padright:
         qkeystoprocess.append(bingtile.TileXYToQuadKey(qkeyx+idx,qkeyy+idy,qkeylvl))
         idx+=1
-    idx=-1
+    idx=(-1)*padleft
     idy+=1
 
 # Create Global Mapper scripts for tile creation
@@ -39,11 +41,11 @@ while idy<tilesy+padbottom:
 # Minlevel and maxlevel equal to export only that level
 itr = 0
 fileindex = 0
-maxperfile = 9000
+maxperfile = 64*4
 totalcount = 0
 for qket in qkeystoprocess:
-    minlevel = 7
-    maxlevel = 7
+    minlevel = 12
+    maxlevel = 12
     qkey = qket
     while len(qkey) < minlevel:
         qkey += '0'
@@ -54,15 +56,17 @@ for qket in qkeystoprocess:
             if itr == 0:
                 script = open("tilescript_"+str(fileindex).rjust(3, '0')+".gms", 'w')
                 script.write('GLOBAL_MAPPER_SCRIPT VERSION=1.00\n')
+                # script.write(
+                #     'IMPORT FILENAME=C:\\karttadata\\eudem\\eudem25.gmc ELEV_UNITS=METERS ELEV_SCALE=4 VOID_ELEV=0.0\n')
+                # script.write(
+                #     'IMPORT FILENAME=C:\\karttadata\\ALOS\\alos.gmc ELEV_UNITS=METERS ELEV_SCALE=1 VOID_ELEV=0.0\n')
                 script.write(
-                    'IMPORT FILENAME=C:\\karttadata\\eudem\\eudem25.gmc ELEV_UNITS=METERS ELEV_SCALE=4 VOID_ELEV=0.0\n')
-                script.write(
-                    'IMPORT FILENAME=C:\\karttadata\\ALOS\\alos.gmc ELEV_UNITS=METERS ELEV_SCALE=4 VOID_ELEV=0.0\n')
-                script.write(
-                    'IMPORT FILENAME=C:\\karttadata\\korkeus.gmc ELEV_UNITS=METERS ELEV_SCALE=4\n')
-                script.write(   
-                    'IMPORT FILENAME=C:\\karttadata\\korkeus2m.gmc ELEV_UNITS=METERS ELEV_SCALE=4 SAMPLING_METHOD=MED_5X5\n')
-                script.write('LOAD_PROJECTION PROJ="EPSG:4326"\n')
+                    'IMPORT FILENAME=C:\\Tiles_test\\031313.bil ELEV_UNITS=METERS ELEV_SCALE=1 VOID_ELEV=0.0\n')
+                # script.write(
+                #     'IMPORT FILENAME=C:\\karttadata\\korkeus.gmc ELEV_UNITS=METERS ELEV_SCALE=4\n')
+                # script.write(   
+                #     'IMPORT FILENAME=C:\\karttadata\\korkeus2m.gmc ELEV_UNITS=METERS ELEV_SCALE=4 SAMPLING_METHOD=MED_5X5\n')
+                # script.write('LOAD_PROJECTION PROJ="EPSG:4326"\n')
                 fileindex += 1
             print(qkey)
             totalcount += 1
