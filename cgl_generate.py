@@ -25,7 +25,7 @@ def createLayout(tiles):
     prevval = 0
     pervlevel = 0
     for tile in tiles:
-        subkey = tile[str(tile).index("_")+1+6:str(tile).index(".rw")]
+        subkey = tile[str(tile).index("dem")+3+6:str(tile).index(".bil")]
         subval = 0
         level = len(subkey)
         if subkey == '':
@@ -48,6 +48,7 @@ def createLayout(tiles):
 
 def createBlob(tiles):
     """ Compressed all tiles to single binary blob.
+    
     Args:
         tiles (list): List of tile names
     Returns:
@@ -66,7 +67,7 @@ def createBlob(tiles):
     my_filters = [{"id": lzma.FILTER_LZMA1,
                    "preset": lzma.PRESET_DEFAULT, "lc": lc, "lp": lp, "pb": pb, "dict_size": 65536}, ]
     for tile in tiles:
-        qkey = tile[str(tile).index("_")+1:str(tile).index(".rw")]
+        qkey = tile[str(tile).index("_")+1:str(tile).index(".bil")]
         infile = open(tile, 'rb')
         inarr = infile.read()
         infile.close()
@@ -98,7 +99,7 @@ def compressChunk(chunkid, chunk):
     my_filters = [{"id": lzma.FILTER_LZMA1,
                    "preset": lzma.PRESET_DEFAULT, "lc": lc, "lp": lp, "pb": pb, "dict_size": 65536}, ]
     for tile in chunk:
-        qkey = tile[str(tile).index("_")+1:str(tile).index(".rw")]
+        qkey = tile[str(tile).index("_")+1:str(tile).index(".bil")]
         infile = open(tile, 'rb')
         inarr = infile.read()
         infile.close()
@@ -119,7 +120,7 @@ def collect_result(result):
     compressedreturns[result[0]] = result[1]
 
 
-def createBlobMT(tiles):
+def createBlobMT(tiles,threads):
     """ Compressed all tiles to single binary blob.
     Args:
         tiles (list): List of tile names
@@ -150,47 +151,71 @@ def createBlobMT(tiles):
 
 def deltaSizes(sizes):
     deltacompressedsizes = bytes()
-    previoussize = 0
+    lastVal = 0
     for idx, size in enumerate(sizes):
-        delta = size-previoussize
-        print("Prev: " + f'{previoussize:08}')
-        print("Curr: " + f'{size:08}')
-        print("Delta: " + f'{delta:08}')
-        previoussize = size
-        if idx == 0:
-            firstword = 32768
-            while delta > 65400:
-                delta = delta - 65536
-                firstword += 1
-            deltacompressedsizes = deltacompressedsizes + \
-                firstword.to_bytes(2, 'little')
-            deltacompressedsizes = deltacompressedsizes + \
-                delta.to_bytes(2, 'little')
-        elif delta > 65441:
-            delta = delta-65536
-            print("Delta: " + f'{delta:08}')
-            deltacompressedsizes = deltacompressedsizes + \
-                binascii.unhexlify("0180")
-            deltacompressedsizes = deltacompressedsizes + \
-                delta.to_bytes(2, 'little')
-        elif delta > 16384:
-            deltacompressedsizes = deltacompressedsizes + \
-                binascii.unhexlify("0080")
-            deltacompressedsizes = deltacompressedsizes + \
-                delta.to_bytes(2, 'little')
-        elif delta < 0:
-            firstword = 65536
-            while delta < 0:
-                firstword -= 1
-                delta = 65536-delta*(-1)
-            print("Delta: " + f'{delta:08}')
-            deltacompressedsizes = deltacompressedsizes + \
-                firstword.to_bytes(2, 'little')
-            deltacompressedsizes = deltacompressedsizes + \
-                delta.to_bytes(2, 'little')
+        delta = size-lastVal
+        # print("Prev: " + f'{previoussize:08}')
+        # print("Curr: " + f'{size:08}')
+        # print("Delta: " + f'{delta:08}')
+        lastVal = size
+        if delta>=0x0000 and delta<=0x4000:
+            deltacompressedsizes+= delta.to_bytes(2, 'little')
+        elif delta < 0x0000 and delta>-0x4000:
+            Val=0x8000-((-1)*delta)
+            deltacompressedsizes+= Val.to_bytes(2, 'little')
+        elif delta <-0x0000:
+            firstword = 0x10000
+            while delta <0:
+                firstword-=1
+                delta+=0x10000
+            deltacompressedsizes+= firstword.to_bytes(2, 'little')
+            deltacompressedsizes+= delta.to_bytes(2, 'little')
+        elif delta >=0x10000:
+            firstword=0xFF00
+            while delta >0xFFFF:
+                delta-=0x10000
+                firstword+=1
+            deltacompressedsizes+= firstword.to_bytes(2, 'little')
+            deltacompressedsizes+= delta.to_bytes(2, 'little')
         else:
-            deltacompressedsizes = deltacompressedsizes + \
-                delta.to_bytes(2, 'little')
+            firstword=0x8000
+            deltacompressedsizes+= firstword.to_bytes(2, 'little')
+            deltacompressedsizes+= delta.to_bytes(2, 'little')
+            
+        # if idx == 0:
+        #     firstword = 32768
+        #     while delta > 65520:
+        #         delta = delta - 65536
+        #         firstword += 1
+        #     deltacompressedsizes = deltacompressedsizes + \
+        #         firstword.to_bytes(2, 'little')
+        #     deltacompressedsizes = deltacompressedsizes + \
+        #         delta.to_bytes(2, 'little')
+        # elif delta > 65520:
+        #     delta = delta-65536
+        #     # print("Delta: " + f'{delta:08}')
+        #     deltacompressedsizes = deltacompressedsizes + \
+        #         binascii.unhexlify("0180")
+        #     deltacompressedsizes = deltacompressedsizes + \
+        #         delta.to_bytes(2, 'little')
+        # elif delta > 16384:
+        #     deltacompressedsizes = deltacompressedsizes + \
+        #         binascii.unhexlify("0080")
+        #     deltacompressedsizes = deltacompressedsizes + \
+        #         delta.to_bytes(2, 'little')
+        # elif delta < 0:
+        #     firstword = 65536
+        #     while delta < 0:
+        #         firstword -= 1
+        #         delta = 65536-delta*(-1)
+        #     # print("Delta: " + f'{delta:08}')
+        #     deltacompressedsizes = deltacompressedsizes + \
+        #         firstword.to_bytes(2, 'little')
+        #     deltacompressedsizes = deltacompressedsizes + \
+        #         delta.to_bytes(2, 'little')
+        # else:
+        #     deltacompressedsizes = deltacompressedsizes + \
+        #         delta.to_bytes(2, 'little')
     return deltacompressedsizes
 
 
@@ -203,7 +228,7 @@ def deltasToUncompressed(compressedsizes, uncompressedsizes):
         while delta > 65535:
             delta = delta-65536
             firstbyte += 1
-        print("fb:"+f'{firstbyte:06}'+"delta:"+f'{delta:06}')
+        #print("fb:"+f'{firstbyte:06}'+"delta:"+f'{delta:06}')
         deltastouncompressed = deltastouncompressed + \
             firstbyte.to_bytes(2, 'little')
         deltastouncompressed = deltastouncompressed+delta.to_bytes(2, 'little')
@@ -256,7 +281,7 @@ def compileCGL(headerc, blob, tilecount):
     return cgl
 
 
-def createCGL(srcpaths, dstpath):
+def createCGL(srcpaths, dstpath,threads):
     tiles = srcpaths
     tiles = sorted(tiles, key=custom_key)
     tilecount = len(tiles)
@@ -264,7 +289,7 @@ def createCGL(srcpaths, dstpath):
     if os.path.dirname(dstpath) != '':
         if not os.path.exists(os.path.dirname(dstpath)):
             os.makedirs(os.path.dirname(dstpath))
-    btablob, compressedsizes, uncompressedsizes = createBlobMT(tiles)
+    btablob, compressedsizes, uncompressedsizes = createBlobMT(tiles,threads)
     deltasizes = deltaSizes(compressedsizes)
     dtous = deltasToUncompressed(compressedsizes, uncompressedsizes)
     uncompressedheader = createUncompressedHeader(btalayout, deltasizes, dtous)
@@ -273,3 +298,24 @@ def createCGL(srcpaths, dstpath):
     outfile = open(dstpath, 'wb', buffering=1048576)
     outfile.write(cgl)
     outfile.close()
+
+def createCGLs(TopLevelQKeys, basepath,threads):
+    totalcount = 0
+    for qkey in TopLevelQKeys:
+        if qkey[1]==False:
+            totalcount += 1
+    print("Generating "+str(totalcount)+" CGLs")
+    counter = 0
+    for qkey in TopLevelQKeys:
+        if qkey[1] == False:
+            files = glob.glob(basepath+"\\Tile/6/dem"+qkey[0]+"*.bil")
+            files += glob.glob(basepath+"\\Delta/7/dem"+qkey[0]+"*.bil")
+            files += glob.glob(basepath+"\\Delta/8/dem"+qkey[0]+"*.bil")
+            files += glob.glob(basepath+"\\Delta/9/dem"+qkey[0]+"*.bil")
+            files += glob.glob(basepath+"\\Delta/10/dem"+qkey[0]+"*.bil")
+            files += glob.glob(basepath+"\\Delta/11/dem"+qkey[0]+"*.bil")
+            files += glob.glob(basepath+"\\Delta/12/dem"+qkey[0]+"*.bil")
+            createCGL(files, basepath+"\\" +
+                           qkey[0][0:3]+"/dem"+qkey[0][3:6]+".cgl",threads)
+            counter += 1
+            print("Done "+str(counter)+' of '+str(totalcount))
