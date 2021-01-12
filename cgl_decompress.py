@@ -66,11 +66,11 @@ def decompress(src, baseqkey, dst):
     previousval = 0
     level = 0
     while counter < tilecount:
-        val = int.from_bytes(headerunlzma[counter*2:counter*2+2], 'little')
+        val = int.from_bytes(headerunlzma[counter*4:counter*4+4], 'little')
         newval = val+previousval
-        if newval >= 4096:
+        if newval >= 268435456:
             level += 1
-            newval -= 4096
+            newval -= 268435456
         qkeysinbase10.append([level, newval])
         previousval = qkeysinbase10[counter][1]
         qkey = ToTileQKey(level, qkeysinbase10[counter][1])
@@ -89,7 +89,7 @@ def decompress(src, baseqkey, dst):
     # extract compressed sizes
     compressedsizes = []
     uncompressedsizes = []
-    previoussize = 0
+    lastVal = 0
     counter = 0
     tilecount = int.from_bytes(inarr[32:34], 'little')
     cbegin = tilecount*qkeysize
@@ -98,43 +98,27 @@ def decompress(src, baseqkey, dst):
         val = int.from_bytes(headerunlzma[i:i+2], 'little')
         print(counter)
         print("Delta:"+str(val))
-        if val == 32768:
+        if val >= 0x8000 and val<0xFF00:
+            mult=val-0x8000
             i += 2
-            val = int.from_bytes(headerunlzma[i:i+2], 'little')
-            print(val)
-            val = previoussize+val
-            print("addzero")
-            print("Adding:"+str(val))
-        elif val == 32769:
+            nextVal = int.from_bytes(headerunlzma[i:i+2], 'little')
+            val = lastVal + (0x10000 * mult) + nextVal
+        elif val >= 0xFF00:
+            mult = (0xFFFF - val) + 1
             i += 2
-            val = int.from_bytes(headerunlzma[i:i+2], 'little')
-            print(val)
-            val = previoussize+65536+val
-            print("addfull")
-            print("Adding:"+str(val))
-        elif val == 65535:
-            i += 2
-            val = int.from_bytes(headerunlzma[i:i+2], 'little')
-            print("Adding:"+str(val))
-            val = previoussize-65536+val
-            print("subfull")
-        elif val == 65534:
-            i += 2
-            val = int.from_bytes(headerunlzma[i:i+2], 'little')
-            print("Adding:"+str(val))
-            val = previoussize-65536*2+val
-            print("subfull2")
-        elif val > 16384:
-            val = val+previoussize-32768
-            print("Adding:"+str(val))
+            nextVal = int.from_bytes(headerunlzma[i:i+2], 'little')
+            val = lastVal - (0x10000 * mult) + nextVal
+        elif val > 0x4000:
+            nextVal = val
+            subVal = 0x8000 - nextVal
+            val = lastVal - subVal
         else:
-            val = previoussize+val
-            print("normal")
-            print("Adding:"+str(val))
+            nextVal = val
+            val = lastVal + nextVal
         i += 2
         print("Newcs:"+str(val))
         compressedsizes.append(val)
-        previoussize = val
+        lastVal = val
         counter += 1
     for size in compressedsizes:
         print(size)
@@ -142,20 +126,17 @@ def decompress(src, baseqkey, dst):
     counter = 0
     while counter < tilecount:
         val = int.from_bytes(headerunlzma[i:i+2], 'little')
-        print(val)
-        if val == 32768:
+        if val >= 0x8000:
+            mult = val - 0x8000
             i += 2
-            val = int.from_bytes(headerunlzma[i:i+2], 'little')
-        elif val == 32769:
-            i += 2
-            val = int.from_bytes(headerunlzma[i:i+2], 'little')+65536
-        elif val == 32770:
-            i += 2
-            val = int.from_bytes(headerunlzma[i:i+2], 'little')+65536*2
+            nextVal = int.from_bytes(headerunlzma[i:i+2], 'little')
+            val = compressedsizes[counter] + (0x10000 * mult) + nextVal
+        else:
+            nextVal = val
+            val = compressedsizes[counter] + nextVal 
         i += 2
         print(val)
-        print(compressedsizes[counter])
-        uncompressedsizes.append(val+compressedsizes[counter])
+        uncompressedsizes.append(val)
         counter += 1
     # decompress files DEM from blob
     i = 0
@@ -177,10 +158,17 @@ def decompress(src, baseqkey, dst):
         print("Length:"+str(dataend-datastart))
         # print(dataend)
         # print(i)
+
         print("datastart: "+f'{datastart:08}' + "end: "+f'{dataend:08}')
         fullqkey = qkeybase+qkeys[i]
         outfile = open(dst+"dem_"+fullqkey+".rw", "wb")
-        outsize=outfile.write(lzma.decompress(
+        outsize=0
+        if compressedsizes[i]==uncompressedsizes[i]:
+            print("No compression")
+            print(f"Level {len(fullqkey)}")
+            outsize=outfile.write(inarr[datastart:dataend])
+        else:
+            outsize=outfile.write(lzma.decompress(
             inarr[datastart:dataend], lzma.FORMAT_RAW, None, my_filters)[0:])
         outfile.close()
         # write hdr file
