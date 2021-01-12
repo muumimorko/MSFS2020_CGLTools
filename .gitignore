@@ -1,6 +1,4 @@
 /__pycache__/
 /_testfiles/
-/Tile/
-/Delta/
-/tilescript*
-/102/
+/_venv/
+/_temp/
