@@ -15,15 +15,15 @@ import cgl_generate as cglc
 manifest = {
     "dependencies": [],
     "content_type": "SCENERY",
-    "title": "Scenery Title",
+    "title": "Finland",
     "manufacturer": "",
-    "creator": "creator",
-    "package_version": "0.2.0",
+    "creator": "morko",
+    "package_version": "0.2.1",
     "minimum_game_version": "1.11.6",
     "release_notes": {
         "neutral": {
-            "LastUpdate": "Latest release note \n With two rows",
-            "OlderHistory": "These can be seen in package manager \n also this row"
+            "LastUpdate": "Latest release note",
+            "OlderHistory": "These can be seen in package manager"
         }
     }
 }
@@ -37,7 +37,7 @@ manifest = {
 #           also DEM tile cutting level. Default 12. Don't change.
 # Padding: If enabled (=1), generates extra tiles around target area
 #          to minimize edge errors. Default 1.
-# DEMInputFiles: List of source elevation data files, ELEVATION RELATIVE TO EGM2008
+# DEMInputFiles: List of source elevation data files, #! ELEVATION MUST BE RELATIVE TO EGM2008
 #                can be any format Global Mapper supports.
 # GMExePath: Path to Global Mapper executable.
 # GMThreads: How many GM instances to run in parallel
@@ -60,7 +60,7 @@ class Options():
     GMThreads: int = mp.cpu_count()
     ProcessingThreads: int = mp.cpu_count()
     Basepath: str = os.path.abspath('./_temp/')
-    TargetName: str = "morko-dem-finland-20m"
+    TargetName: str = "morko-dem-finland-lvl12"
 
 
 @dataclass
@@ -71,8 +71,8 @@ class LongLat():
 
 # UpperLeft and LowerRight coordinates for target area
 # If area covers multiple cgls, multiple cgls will be generated.
-longlatUL = LongLat(20.857498, 69.043337)
-longlatLR = LongLat(20.857498, 69.043337)
+longlatUL = LongLat(18.60,70.75)
+longlatLR = LongLat(31.90, 59.20)
 
 
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
         allSubQKeys = ListAllSubQKeys(
             TopLevelQKeys, Options.MaxLevel, Options.Basepath)
         totalSubCount = len(allSubQKeys)
-        subsPerChunk = int(totalSubCount/Options.GMThreads)
+        subsPerChunk = int(totalSubCount/(Options.GMThreads*2))
         subQKeyChunks = chunks(allSubQKeys, subsPerChunk)
         for index, chunk in enumerate(subQKeyChunks):
             CreateGlobalMapperScript(index, chunk, Options)

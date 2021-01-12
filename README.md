@@ -3,22 +3,37 @@ Tools for creating terrain stuff for MSFS 2020
 
 Code might bite your nose off if even if you don't look at it the wrong way and "docs" might melt your brain, sorry about that.
 
-## Prereg
+## Prereg software
 ```
-Python (tested on 3.8)
-numpy==1.19.3
+Python3
+OSGeo4W
+Blue Marble Global Mapper (other mapping packages can be adapted)
+
+```
+## Python modules
+```
+numpy
 matplotlib
 opencv-python
-Blue Marble Global Mapper (other mapping packages can be adapted)
+pyshp
+click
 ```
 
-## DEM CGL generation
-Install prereg, configure and run each numbered script. Just beware of wild hardcoded pathnames and other "variables" :D
+## DEM CGL generation in nutshell
+- Install prereg software and python modules
+- Convert source data elevation to EGM2008
+- edit "GenDEMCGL.py" and configure manifest, settings, and coordinates
+- run "GenDEMCGL.py", preferably in debugger (Visual Studio Code), so you can set breakpoints to Raised exceptions.
 
-Then study package folder structure shown as "creator-exampledem" folder, copy generated cgls to right paths, fill layout.json (sizes and dates don't matter, only paths), manifest.json and maybe change thumbnail. Copy to Community folder and hope for the best.
+## [More Detailed How-To](docs/tut/DEM-CGL.md)
+
+## Credits
+- Szpike on the FSDeveloper Forum for:
+  - CGL index delta decompression details
+  - CGL content type, and other CGL header values
 
 ## Considerations
-- Currently generation is possible to level 12 (~20 meter resolution).
+- Currently generation is possible to level 12 (~40 meter resolution on the equator, more at higher latitudes).
 - Will replace whole level 6 tile -> minimum coverage ~600\*600 Km.
 
 ## Progress
@@ -30,7 +45,7 @@ Then study package folder structure shown as "creator-exampledem" folder, copy g
 - [ ] Re-compressing of all CGLs
 - [X] DEM creation from source data
 - [X] Successfull loading of self-generated DEM CGL.
-- [ ] Blending to in-game DEM?
+- [ ] Blending to in-game DEM
 - [ ] Vector file type format
 - [ ] Vector generation
 - [ ] Anything and everything else
