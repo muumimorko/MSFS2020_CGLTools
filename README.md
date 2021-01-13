@@ -34,6 +34,7 @@ click
 
 ## Considerations
 - Currently generation is possible to level 12 (~40 meter resolution on the equator, more at higher latitudes).
+- If there is higher resolution data (lvl12+) on Azure, the game will use it and ignore local files. (Offline mode works)
 - Will replace whole level 6 tile -> minimum coverage ~600\*600 Km.
 
 ## Progress
